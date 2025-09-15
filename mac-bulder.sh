@@ -166,19 +166,36 @@ else
     echo -e "${YELLOW}⚠️  Фон background.png не найден — будет использован стандартный интерфейс${NC}"
 fi
 
-# Создаем DMG с помощью create-dmg
+# Создаем красивый DMG-образ с помощью create-dmg (версия 1.2.2+)
+DMG_NAME="Bitrix24-Repackager.dmg"
+APP_PATH="$APP_NAME"
+
+echo -e "${YELLOW}Создаем DMG-образ со стрелкой: ${DMG_NAME}...${NC}"
+
+# Удаляем старый DMG, если существует
+if [ -f "$DMG_NAME" ]; then
+    echo -e "${YELLOW}Удаляем старый образ: $DMG_NAME${NC}"
+    rm -f "$DMG_NAME"
+fi
+
+# Проверяем, что .app существует
+if [ ! -d "$APP_PATH" ]; then
+    echo -e "${RED}Ошибка: приложение $APP_PATH не найдено!${NC}"
+    exit 1
+fi
+
+# Создаем DMG с автоматической стрелкой (без фона!)
 if create-dmg \
     --volname "Bitrix24 Repackager" \
-    --window-size 600 400 \
+    --window-size 600 300 \
     --icon-size 128 \
-    --app-drop-link 400 200 \
-    --icon "$APP_PATH" 200 200 \
+    --icon "$APP_PATH" 150 130 \
+    --app-drop-link 450 130 \
     --hide-extension "$APP_PATH" \
-    $( $USE_BACKGROUND && echo "--background \"$BACKGROUND_IMAGE\"" ) \
     "$DMG_NAME" \
     "$APP_PATH"; then
 
-    echo -e "${GREEN}✅ Красивый DMG-образ успешно создан: $DMG_NAME${NC}"
+    echo -e "${GREEN}✅ DMG-образ со стрелкой успешно создан: $DMG_NAME${NC}"
 else
     echo -e "${RED}❌ Ошибка при создании DMG-образа${NC}"
     exit 1
