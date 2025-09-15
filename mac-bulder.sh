@@ -89,7 +89,6 @@ mkdir -p "$TEMP_ICONSET"
 cp icon.png "$TEMP_ICONSET/icon_512x512.png"
 
 # Генерируем все размеры
-# shellcheck disable=SC2164
 cd "$TEMP_ICONSET"
 
 sips -z 16  16  icon_512x512.png --out icon_16x16.png >/dev/null
@@ -125,7 +124,6 @@ cat > Contents.json << 'EOF'
 }
 EOF
 
-# shellcheck disable=SC2103
 cd ..
 
 # Конвертируем в .icns
@@ -139,3 +137,51 @@ fi
 
 # Убираем временные файлы
 rm -rf "$TEMP_ICONSET" AppIcon.icns
+
+# Создаем красивый DMG-образ с помощью create-dmg
+DMG_NAME="Bitrix24-Repackager.dmg"
+APP_PATH="$APP_NAME"
+
+echo -e "${YELLOW}Создаем красивый DMG-образ: ${DMG_NAME}...${NC}"
+
+# Удаляем старый DMG, если существует
+if [ -f "$DMG_NAME" ]; then
+    echo -e "${YELLOW}Удаляем старый образ: $DMG_NAME${NC}"
+    rm -f "$DMG_NAME"
+fi
+
+# Проверяем, что .app существует
+if [ ! -d "$APP_PATH" ]; then
+    echo -e "${RED}Ошибка: приложение $APP_PATH не найдено!${NC}"
+    exit 1
+fi
+
+# Проверяем наличие фонового изображения
+BACKGROUND_IMAGE="background.png"
+USE_BACKGROUND=false
+if [ -f "$BACKGROUND_IMAGE" ]; then
+    USE_BACKGROUND=true
+    echo -e "${GREEN}✅ Найден фон: $BACKGROUND_IMAGE${NC}"
+else
+    echo -e "${YELLOW}⚠️  Фон background.png не найден — будет использован стандартный интерфейс${NC}"
+fi
+
+# Создаем DMG с помощью create-dmg
+if create-dmg \
+    --volname "Bitrix24 Repackager" \
+    --window-size 600 400 \
+    --icon-size 128 \
+    --app-drop-link 400 200 \
+    --icon "$APP_PATH" 200 200 \
+    --hide-extension "$APP_PATH" \
+    $( $USE_BACKGROUND && echo "--background \"$BACKGROUND_IMAGE\"" ) \
+    "$DMG_NAME" \
+    "$APP_PATH"; then
+
+    echo -e "${GREEN}✅ Красивый DMG-образ успешно создан: $DMG_NAME${NC}"
+else
+    echo -e "${RED}❌ Ошибка при создании DMG-образа${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}🎉 Сборка завершена успешно!${NC}"
