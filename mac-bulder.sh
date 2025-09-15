@@ -1,48 +1,104 @@
 #!/bin/bash
 
+# Цвета для вывода
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo -e "${GREEN}Создание приложения Bitrix24 Repackager...${NC}"
+
+# Проверяем что бинарный файл существует
+if [ ! -f "bitrix-repackager-macos" ]; then
+    echo -e "${RED}Ошибка: бинарный файл bitrix-repackager-macos не найден${NC}"
+    echo "Сначала выполните: go build -o bitrix-repackager-macos"
+    exit 1
+fi
+
 # Создаем структуру приложения
-mkdir -p "Bitrix24 Repackager.app/Contents/MacOS"
-mkdir -p "Bitrix24 Repackager.app/Contents/Resources"
+APP_NAME="Bitrix24 Repackager.app"
+echo -e "${YELLOW}Создаем структуру приложения...${NC}"
+mkdir -p "$APP_NAME/Contents/MacOS"
+mkdir -p "$APP_NAME/Contents/Resources"
 
 # Копируем бинарный файл
-cp bitrix-repackager-macos "Bitrix24 Repackager.app/Contents/MacOS/"
+echo -e "${YELLOW}Копируем бинарный файл...${NC}"
+cp bitrix-repackager-macos "$APP_NAME/Contents/MacOS/"
 
 # Создаем скрипт запуска
-cat > "Bitrix24 Repackager.app/Contents/MacOS/bitrix-repackager" << 'EOF'
+echo -e "${YELLOW}Создаем скрипт запуска...${NC}"
+cat > "$APP_NAME/Contents/MacOS/bitrix-repackager" << 'EOF'
 #!/bin/bash
 cd "$(dirname "$0")"
 exec "./bitrix-repackager-macos"
 EOF
 
-chmod +x "Bitrix24 Repackager.app/Contents/MacOS/bitrix-repackager"
+chmod +x "$APP_NAME/Contents/MacOS/bitrix-repackager"
+chmod +x "$APP_NAME/Contents/MacOS/bitrix-repackager-macos"
 
-# Создаем Info.plist
-cat > "Bitrix24 Repackager.app/Contents/Info.plist" << 'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleExecutable</key>
-    <string>bitrix-repackager</string>
-    <key>CFBundleIdentifier</key>
-    <string>com.bitrix24.repackager</string>
-    <key>CFBundleName</key>
-    <string>Bitrix24 Repackager</string>
-    <key>CFBundleVersion</key>
-    <string>1.0</string>
-    <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>LSMinimumSystemVersion</key>
-    <string>10.13</string>
-    <key>NSHighResolutionCapable</key>
-    <true/>
-    <key>LSUIElement</key>
-    <false/>
-</dict>
-</plist>
-EOF
-
-echo "Приложение создано: Bitrix24 Repackager.app"
-echo "Можно запускать двойным кликом!"
+# Создаем иконку (128x128 PNG)
+echo -e "${YELLOW}Создаем иконку приложения...${NC}"
+cat > "$APP_NAME/Contents/Resources/AppIcon.icns" << 'EOF'
+iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAABHNCSVQICAgIfAhkiAAAAAlwSFlz
+AAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAoXSURB
+VHic7Z15kFXVFcd/5w0zwzAsIosgIqCACyqKqLigRk1cYjQx0cQlalJqUqZSU5WqVKWq/5iqVKX+
+SFWqUqkklcQlLolLjEs0LrihIqKICyqL7DAMs7/3Tv9x7p1hYHjv3Xfve/fNe9yqU8wM7957fvfc
+c8+2XKSUUtKJqXcH6o0SQAkA6l2AeqMEUAKg3gWoN0oAJQDqXYB6owRQAoB6F6DeKAGUAKDeBag3
+SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACo
+dwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdK
+ACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6
+F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqME
+UAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3
+AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oA
+JQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4F
+qDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQ
+AoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2A
+eqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAl
+AKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWo
+N0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQA
+oN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6
+owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA
+6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3
+SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg
+3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4o
+AZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDq
+XYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0S
+QAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDe
+Bag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igB
+lACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoX
+oN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJA
+CQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB
+6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGU
+AKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg
+3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJ
+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
+MohNgBuAuZHbaBnE
