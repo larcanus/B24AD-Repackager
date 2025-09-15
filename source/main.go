@@ -50,12 +50,20 @@ func main() {
 	var tempDir string
 	var manifestData Manifest
 
-	// Стилизация заголовка
-	title := widget.NewLabelWithStyle("Bitrix24 Bad Advice Extension Repackager", fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Monospace: false})
-	title.TextStyle = fyne.TextStyle{Bold: true}
-// 	title.TextSize = 20
+	// Обёртка для возврата на первый шаг
+	var showStep1Func func()
+	showStep1Func = func() {
+		showStep1(myWindow, &inputFile, &tempDir, &manifestData, showStep1Func)
+	}
 
-	// Инструкция с выделением шагов
+	showStep1Func()
+	myWindow.ShowAndRun()
+}
+
+// Первый шаг: выбор файла
+func showStep1(window fyne.Window, inputFile *string, tempDir *string, manifestData *Manifest, showStep1Func func()) {
+	title := widget.NewLabelWithStyle("Bitrix24 Bad Advice Extension Repackager", fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Monospace: false})
+
 	instructions := widget.NewRichTextFromMarkdown(`
 **Эта программа поможет пересобрать расширение Chrome для B24AD на вашем Bitrix24.**
 
@@ -70,37 +78,35 @@ func main() {
 
 	fileEntry := widget.NewEntry()
 	fileEntry.SetPlaceHolder("Выберите ZIP файл расширения...")
-	fileEntry.Resize(fyne.NewSize(380, fileEntry.MinSize().Height)) // Увеличиваем ширину поля
+	fileEntry.Resize(fyne.NewSize(380, fileEntry.MinSize().Height))
 
 	fileEntry.OnChanged = func(text string) {
-		inputFile = text
+		*inputFile = text
 	}
 
 	browseButton := widget.NewButtonWithIcon("Обзор...", theme.FolderOpenIcon(), func() {
 		fileDialog := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 			if err == nil && reader != nil {
-				inputFile = reader.URI().Path()
-				fileEntry.SetText(inputFile)
+				*inputFile = reader.URI().Path()
+				fileEntry.SetText(*inputFile)
 			}
-		}, myWindow)
+		}, window)
 		fileDialog.SetFilter(storage.NewExtensionFileFilter([]string{".zip"}))
-		fileDialog.Resize(fyne.NewSize(700, 500)) // Увеличиваем размер диалога
+		fileDialog.Resize(fyne.NewSize(700, 500))
 		fileDialog.Show()
 	})
 	browseButton.Resize(fyne.NewSize(110, browseButton.MinSize().Height))
 
-	// Контейнер для поля выбора файла и кнопки
 	fileRow := container.NewGridWithColumns(2,
-		container.NewMax(fileEntry), // fileEntry занимает максимум ширины
+		container.NewMax(fileEntry),
 		browseButton,
 	)
 
 	nextButton := widget.NewButtonWithIcon("Далее", theme.NavigateNextIcon(), func() {
-		validateArchive(myWindow, inputFile, &tempDir, &manifestData)
+		validateArchive(window, *inputFile, tempDir, manifestData, showStep1Func)
 	})
 	nextButton.Importance = widget.HighImportance
 
-	// Добавляем отступы и выравнивание
 	content := container.NewVBox(
 		title,
 		layout.NewSpacer(),
@@ -112,7 +118,6 @@ func main() {
 		container.NewCenter(nextButton),
 	)
 
-	// Добавляем внешние отступы
 	padded := container.NewVBox(
 		layout.NewSpacer(),
 		container.NewVBox(
@@ -122,11 +127,10 @@ func main() {
 		),
 		layout.NewSpacer(),
 	)
-	myWindow.SetContent(container.NewPadded(padded))
-	myWindow.ShowAndRun()
+	window.SetContent(container.NewPadded(padded))
 }
 
-func validateArchive(window fyne.Window, inputFile string, tempDir *string, manifestData *Manifest) {
+func validateArchive(window fyne.Window, inputFile string, tempDir *string, manifestData *Manifest, backToStep1 func()) {
 	if inputFile == "" {
 		showError(window, "Файл не выбран")
 		return
@@ -168,7 +172,7 @@ func validateArchive(window fyne.Window, inputFile string, tempDir *string, mani
 
 	*tempDir = rootDir
 
-	showURLInput(window, *tempDir, *manifestData)
+	showURLInput(window, *tempDir, *manifestData, backToStep1)
 }
 
 func findExtensionRoot(dir string) (string, error) {
@@ -196,7 +200,7 @@ func findExtensionRoot(dir string) (string, error) {
 	return filepath.Dir(manifestPath), nil
 }
 
-func showURLInput(window fyne.Window, tempDir string, manifestData Manifest) {
+func showURLInput(window fyne.Window, tempDir string, manifestData Manifest, backToStep1 func()) {
 	title := widget.NewLabelWithStyle("Введите URL вашего портала Bitrix24", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	urlLabel := widget.NewLabelWithStyle("URL вашего портала Bitrix24:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	urlEntry := widget.NewEntry()
@@ -209,8 +213,7 @@ func showURLInput(window fyne.Window, tempDir string, manifestData Manifest) {
 	buildButton.Importance = widget.HighImportance
 
 	backButton := widget.NewButtonWithIcon("Назад", theme.NavigateBackIcon(), func() {
-		os.RemoveAll(tempDir)
-		os.Exit(0)
+		backToStep1()
 	})
 
 	buttons := container.NewHBox(
@@ -257,6 +260,7 @@ func repackExtension(window fyne.Window, urlInput string, tempDir string, manife
 		return
 	}
 
+	defaultName := "B24AD-custom-url.zip"
 	dlg := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error) {
 		if err == nil && writer != nil {
 			defer writer.Close()
@@ -272,13 +276,21 @@ func repackExtension(window fyne.Window, urlInput string, tempDir string, manife
 				return
 			}
 
-			dialog.ShowInformation("Успех",
-				fmt.Sprintf("Расширение успешно пересобрано!\n\nДобавленные URL:\n%s\n%s\n\nСохранено в: %s",
-					httpURL, httpsURL, outputFile), window)
+			// Показываем диалог успеха и закрываем приложение после OK
+			successDlg := dialog.NewCustom("Успех", "OK",
+				widget.NewLabel(fmt.Sprintf("Расширение успешно пересобрано!\n\nДобавленные URL:\n%s\n%s\n\nСохранено в: %s",
+					httpURL, httpsURL, outputFile)),
+				window,
+			)
+			successDlg.SetOnClosed(func() {
+				window.Close()
+			})
+			successDlg.Show()
 
 			os.RemoveAll(filepath.Dir(tempDir))
 		}
 	}, window)
+	dlg.SetFileName(defaultName)
 	dlg.Resize(fyne.NewSize(700, 500))
 	dlg.Show()
 }
