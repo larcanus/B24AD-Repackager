@@ -1,4 +1,4 @@
-module bitrix-repackager
+module b24ad-repackager
 
 go 1.21
 
