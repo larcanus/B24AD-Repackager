@@ -36,69 +36,106 @@ EOF
 chmod +x "$APP_NAME/Contents/MacOS/bitrix-repackager"
 chmod +x "$APP_NAME/Contents/MacOS/bitrix-repackager-macos"
 
-# Создаем иконку (128x128 PNG)
-echo -e "${YELLOW}Создаем иконку приложения...${NC}"
-cat > "$APP_NAME/Contents/Resources/AppIcon.icns" << 'EOF'
-iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAABHNCSVQICAgIfAhkiAAAAAlwSFlz
-AAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAoXSURB
-VHic7Z15kFXVFcd/5w0zwzAsIosgIqCACyqKqLigRk1cYjQx0cQlalJqUqZSU5WqVKWq/5iqVKX+
-SFWqUqkklcQlLolLjEs0LrihIqKICyqL7DAMs7/3Tv9x7p1hYHjv3Xfve/fNe9yqU8wM7957fvfc
-c8+2XKSUUtKJqXcH6o0SQAkA6l2AeqMEUAKg3gWoN0oAJQDqXYB6owRQAoB6F6DeKAGUAKDeBag3
-SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACo
-dwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdK
-ACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6
-F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqME
-UAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3
-AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oA
-JQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4F
-qDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQ
-AoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2A
-eqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAl
-AKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWo
-N0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQA
-oN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6
-owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA
-6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3
-SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg
-3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4o
-AZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDq
-XYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0S
-QAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDe
-Bag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igB
-lACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoX
-oN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJA
-CQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB
-6o0SQAkA6l2AeqMEUAKAeheg3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGU
-AKDeBag3SgAlAKh3AeqNEkAJgHoXoN4oAZQAoN4FqDdKACUAqHcB6o0SQAkA6l2AeqMEUAKAeheg
-3igBlACg3gWoN0oAJQCodwHqjRJACQDqXYB6owRQAoB6F6DeKAGUAKDeBag3SgAlAKh3AeqNEkAJ
-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
-MohNgBuAuZHbaBnE
+# Создаем Info.plist
+echo -e "${YELLOW}Создаем Info.plist...${NC}"
+cat > "$APP_NAME/Contents/Info.plist" << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>bitrix-repackager</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleIdentifier</key>
+    <string>bitrix24ad.repackager</string>
+    <key>CFBundleName</key>
+    <string>Bitrix24 Repackager</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.13</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+</dict>
+</plist>
+EOF
+
+# Генерируем AppIcon.icns из одного PNG (например, icon.png 512x512)
+echo -e "${YELLOW}Генерируем AppIcon.icns из icon.png...${NC}"
+
+if [ ! -f "icon.png" ]; then
+    echo -e "${RED}Ошибка: файл icon.png не найден!${NC}"
+    echo "Поместите PNG-иконку (рекомендуется 512x512) с именем icon.png в текущую директорию."
+    exit 1
+fi
+
+# Проверим, что это PNG
+if ! file icon.png | grep -q "PNG image data"; then
+    echo -e "${RED}Ошибка: icon.png не является валидным PNG-файлом${NC}"
+    exit 1
+fi
+
+# Создаём временную папку
+TEMP_ICONSET="temp.iconset"
+rm -rf "$TEMP_ICONSET"
+mkdir -p "$TEMP_ICONSET"
+
+# Копируем исходник
+cp icon.png "$TEMP_ICONSET/icon_512x512.png"
+
+# Генерируем все размеры
+# shellcheck disable=SC2164
+cd "$TEMP_ICONSET"
+
+sips -z 16  16  icon_512x512.png --out icon_16x16.png >/dev/null
+sips -z 32  32  icon_512x512.png --out icon_16x16@2x.png >/dev/null
+sips -z 32  32  icon_512x512.png --out icon_32x32.png >/dev/null
+sips -z 64  64  icon_512x512.png --out icon_32x32@2x.png >/dev/null
+sips -z 128 128 icon_512x512.png --out icon_128x128.png >/dev/null
+sips -z 256 256 icon_512x512.png --out icon_128x128@2x.png >/dev/null
+sips -z 256 256 icon_512x512.png --out icon_256x256.png >/dev/null
+sips -z 512 512 icon_512x512.png --out icon_256x256@2x.png >/dev/null
+sips -z 512 512 icon_512x512.png --out icon_512x512.png >/dev/null
+sips -z 1024 1024 icon_512x512.png --out icon_512x512@2x.png >/dev/null
+
+# Создаём Contents.json
+cat > Contents.json << 'EOF'
+{
+  "images": [
+    { "size": "16x16",   "idiom": "mac", "filename": "icon_16x16.png",     "scale": "1x" },
+    { "size": "16x16",   "idiom": "mac", "filename": "icon_16x16@2x.png",   "scale": "2x" },
+    { "size": "32x32",   "idiom": "mac", "filename": "icon_32x32.png",     "scale": "1x" },
+    { "size": "32x32",   "idiom": "mac", "filename": "icon_32x32@2x.png",   "scale": "2x" },
+    { "size": "128x128", "idiom": "mac", "filename": "icon_128x128.png",   "scale": "1x" },
+    { "size": "128x128", "idiom": "mac", "filename": "icon_128x128@2x.png", "scale": "2x" },
+    { "size": "256x256", "idiom": "mac", "filename": "icon_256x256.png",   "scale": "1x" },
+    { "size": "256x256", "idiom": "mac", "filename": "icon_256x256@2x.png", "scale": "2x" },
+    { "size": "512x512", "idiom": "mac", "filename": "icon_512x512.png",   "scale": "1x" },
+    { "size": "512x512", "idiom": "mac", "filename": "icon_512x512@2x.png", "scale": "2x" }
+  ],
+  "info": {
+    "version": 1,
+    "author": "generated"
+  }
+}
+EOF
+
+# shellcheck disable=SC2103
+cd ..
+
+# Конвертируем в .icns
+if iconutil -c icns "$TEMP_ICONSET" -o AppIcon.icns; then
+    cp AppIcon.icns "$APP_NAME/Contents/Resources/"
+    echo -e "${GREEN}✅ AppIcon.icns успешно создан и скопирован!${NC}"
+else
+    echo -e "${RED}❌ Не удалось создать AppIcon.icns${NC}"
+    exit 1
+fi
+
+# Убираем временные файлы
+rm -rf "$TEMP_ICONSET" AppIcon.icns
