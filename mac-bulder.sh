@@ -6,35 +6,35 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}Создание приложения Bitrix24 Repackager...${NC}"
+echo -e "${GREEN}Создание приложения Bitrix24 Bad Advice Repackager...${NC}"
 
 # Проверяем что бинарный файл существует
-if [ ! -f "bitrix-repackager-macos" ]; then
-    echo -e "${RED}Ошибка: бинарный файл bitrix-repackager-macos не найден${NC}"
-    echo "Сначала выполните: go build -o bitrix-repackager-macos"
+if [ ! -f "b24ad-repackager-macos" ]; then
+    echo -e "${RED}Ошибка: бинарный файл b24ad-repackager-macos не найден${NC}"
+    echo "Сначала выполните: go build -o b24ad-repackager-macos"
     exit 1
 fi
 
 # Создаем структуру приложения
-APP_NAME="Bitrix24 Repackager.app"
+APP_NAME="Bitrix24AD Repackager.app"
 echo -e "${YELLOW}Создаем структуру приложения...${NC}"
 mkdir -p "$APP_NAME/Contents/MacOS"
 mkdir -p "$APP_NAME/Contents/Resources"
 
 # Копируем бинарный файл
 echo -e "${YELLOW}Копируем бинарный файл...${NC}"
-cp bitrix-repackager-macos "$APP_NAME/Contents/MacOS/"
+cp b24ad-repackager-macos "$APP_NAME/Contents/MacOS/"
 
 # Создаем скрипт запуска
 echo -e "${YELLOW}Создаем скрипт запуска...${NC}"
-cat > "$APP_NAME/Contents/MacOS/bitrix-repackager" << 'EOF'
+cat > "$APP_NAME/Contents/MacOS/b24ad-repackager" << 'EOF'
 #!/bin/bash
 cd "$(dirname "$0")"
-exec "./bitrix-repackager-macos"
+exec "./b24ad-repackager-macos"
 EOF
 
-chmod +x "$APP_NAME/Contents/MacOS/bitrix-repackager"
-chmod +x "$APP_NAME/Contents/MacOS/bitrix-repackager-macos"
+chmod +x "$APP_NAME/Contents/MacOS/b24ad-repackager"
+chmod +x "$APP_NAME/Contents/MacOS/b24ad-repackager-macos"
 
 # Создаем Info.plist
 echo -e "${YELLOW}Создаем Info.plist...${NC}"
@@ -44,13 +44,13 @@ cat > "$APP_NAME/Contents/Info.plist" << 'EOF'
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
-    <string>bitrix-repackager</string>
+    <string>b24ad-repackager</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
     <string>bitrix24ad.repackager</string>
     <key>CFBundleName</key>
-    <string>Bitrix24 Repackager</string>
+    <string>Bitrix24AD Repackager</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -139,7 +139,7 @@ fi
 rm -rf "$TEMP_ICONSET" AppIcon.icns
 
 # Создаем красивый DMG-образ с помощью create-dmg
-DMG_NAME="Bitrix24-Repackager.dmg"
+DMG_NAME="Bitrix24AD-Repackager.dmg"
 APP_PATH="$APP_NAME"
 
 echo -e "${YELLOW}Создаем красивый DMG-образ: ${DMG_NAME}...${NC}"
@@ -167,7 +167,7 @@ else
 fi
 
 # Создаем красивый DMG-образ с помощью create-dmg (версия 1.2.2+)
-DMG_NAME="Bitrix24-Repackager.dmg"
+DMG_NAME="Bitrix24AD-Repackager.dmg"
 APP_PATH="$APP_NAME"
 
 echo -e "${YELLOW}Создаем DMG-образ со стрелкой: ${DMG_NAME}...${NC}"
@@ -186,7 +186,7 @@ fi
 
 # Создаем DMG с автоматической стрелкой (без фона!)
 if create-dmg \
-    --volname "Bitrix24 Repackager" \
+    --volname "Bitrix24AD Repackager" \
     --window-size 600 300 \
     --icon-size 128 \
     --icon "$APP_PATH" 150 130 \
