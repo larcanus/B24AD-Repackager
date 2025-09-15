@@ -16,6 +16,8 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/storage"
 )
 
 type Manifest struct {
@@ -35,61 +37,92 @@ type ContentScript struct {
 }
 
 type WebAccessibleResource struct {
-	Matches []string `json:"matches"`
+	Matches   []string `json:"matches"`
 	Resources []string `json:"resources"`
 }
 
 func main() {
 	myApp := app.New()
 	myWindow := myApp.NewWindow("Bitrix24 Bad Advice Extension Repackager")
-	myWindow.Resize(fyne.NewSize(600, 500))
+	myWindow.Resize(fyne.NewSize(650, 520))
 
 	var inputFile string
 	var tempDir string
 	var manifestData Manifest
 
-	// Создаем основной интерфейс
-	instructions := widget.NewLabel(`Bitrix24 Bad Advice Extension Repackager
+	// Стилизация заголовка
+	title := widget.NewLabelWithStyle("Bitrix24 Bad Advice Extension Repackager", fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Monospace: false})
+	title.TextStyle = fyne.TextStyle{Bold: true}
+// 	title.TextSize = 20
 
-Эта программа поможет пересобрать расширение Chrome для Bitrix24 Bad Advice .
+	// Инструкция с выделением шагов
+	instructions := widget.NewRichTextFromMarkdown(`
+**Эта программа поможет пересобрать расширение Chrome для B24AD на вашем Bitrix24.**
 
-Шаги:
-1. Выберите архив расширения (.zip)
-2. Программа проверит валидность архива
-3. Введите URL вашего портала Bitrix24
-4. Выберите куда сохранить пересобранное расширение`)
+**Шаги:**
+1. _Выберите архив расширения (.zip)_
+2. _Введите URL вашего портала Bitrix24_
+3. _Выберите куда сохранить пересобранное расширение_
+`)
 	instructions.Wrapping = fyne.TextWrapWord
 
-	fileLabel := widget.NewLabel("Выберите файл расширения:")
+	fileLabel := widget.NewLabelWithStyle("Выберите файл расширения:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+
 	fileEntry := widget.NewEntry()
 	fileEntry.SetPlaceHolder("Выберите ZIP файл расширения...")
+	fileEntry.Resize(fyne.NewSize(380, fileEntry.MinSize().Height)) // Увеличиваем ширину поля
 
 	fileEntry.OnChanged = func(text string) {
 		inputFile = text
 	}
 
-	browseButton := widget.NewButton("Обзор...", func() {
-		dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
+	browseButton := widget.NewButtonWithIcon("Обзор...", theme.FolderOpenIcon(), func() {
+		fileDialog := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 			if err == nil && reader != nil {
 				inputFile = reader.URI().Path()
 				fileEntry.SetText(inputFile)
 			}
-		}, myWindow).Show()
+		}, myWindow)
+		fileDialog.SetFilter(storage.NewExtensionFileFilter([]string{".zip"}))
+		fileDialog.Resize(fyne.NewSize(700, 500)) // Увеличиваем размер диалога
+		fileDialog.Show()
 	})
+	browseButton.Resize(fyne.NewSize(110, browseButton.MinSize().Height))
 
-	nextButton := widget.NewButton("Далее", func() {
-		validateArchive(myWindow, inputFile, &tempDir, &manifestData)
-	})
-
-	content := container.NewVBox(
-		instructions,
-		fileLabel,
-		container.NewHBox(fileEntry, browseButton),
-		layout.NewSpacer(),
-		nextButton,
+	// Контейнер для поля выбора файла и кнопки
+	fileRow := container.NewGridWithColumns(2,
+		container.NewMax(fileEntry), // fileEntry занимает максимум ширины
+		browseButton,
 	)
 
-	myWindow.SetContent(content)
+	nextButton := widget.NewButtonWithIcon("Далее", theme.NavigateNextIcon(), func() {
+		validateArchive(myWindow, inputFile, &tempDir, &manifestData)
+	})
+	nextButton.Importance = widget.HighImportance
+
+	// Добавляем отступы и выравнивание
+	content := container.NewVBox(
+		title,
+		layout.NewSpacer(),
+		instructions,
+		layout.NewSpacer(),
+		fileLabel,
+		fileRow,
+		layout.NewSpacer(),
+		container.NewCenter(nextButton),
+	)
+
+	// Добавляем внешние отступы
+	padded := container.NewVBox(
+		layout.NewSpacer(),
+		container.NewVBox(
+			layout.NewSpacer(),
+			content,
+			layout.NewSpacer(),
+		),
+		layout.NewSpacer(),
+	)
+	myWindow.SetContent(container.NewPadded(padded))
 	myWindow.ShowAndRun()
 }
 
@@ -99,26 +132,22 @@ func validateArchive(window fyne.Window, inputFile string, tempDir *string, mani
 		return
 	}
 
-	// Создаем временную директорию
 	*tempDir = filepath.Join(os.TempDir(), "bitrix_repack")
 	os.RemoveAll(*tempDir)
 	os.MkdirAll(*tempDir, 0755)
 
-	// Распаковываем архив
 	err := unzip(inputFile, *tempDir)
 	if err != nil {
 		showError(window, "Ошибка распаковки: "+err.Error())
 		return
 	}
 
-	// Определяем корневую папку расширения
 	rootDir, err := findExtensionRoot(*tempDir)
 	if err != nil {
 		showError(window, err.Error())
 		return
 	}
 
-	// Проверяем manifest.json
 	manifestPath := filepath.Join(rootDir, "manifest.json")
 	manifestBytes, err := os.ReadFile(manifestPath)
 	if err != nil {
@@ -126,35 +155,28 @@ func validateArchive(window fyne.Window, inputFile string, tempDir *string, mani
 		return
 	}
 
-	// Парсим manifest.json
 	err = json.Unmarshal(manifestBytes, manifestData)
 	if err != nil {
 		showError(window, "Ошибка чтения manifest.json: "+err.Error())
 		return
 	}
 
-	// Проверяем что это Bitrix24
 	if manifestData.Name != "Bitrix24: Bad Advice" {
 		showError(window, "Это не расширение Bitrix24")
 		return
 	}
 
-	// Обновляем tempDir на корневую папку расширения
 	*tempDir = rootDir
 
-	// Показываем следующий экран
 	showURLInput(window, *tempDir, *manifestData)
 }
 
-// Функция для поиска корневой папки расширения
 func findExtensionRoot(dir string) (string, error) {
-	// Проверяем, есть ли manifest.json прямо в корне
 	rootManifest := filepath.Join(dir, "manifest.json")
 	if _, err := os.Stat(rootManifest); err == nil {
 		return dir, nil
 	}
 
-	// Ищем во вложенных папках
 	var manifestPath string
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -171,35 +193,44 @@ func findExtensionRoot(dir string) (string, error) {
 		return "", fmt.Errorf("manifest.json не найден в архиве")
 	}
 
-	// Возвращаем папку, содержащую manifest.json
 	return filepath.Dir(manifestPath), nil
 }
 
 func showURLInput(window fyne.Window, tempDir string, manifestData Manifest) {
-	urlLabel := widget.NewLabel("URL вашего портала Bitrix24:")
+	title := widget.NewLabelWithStyle("Введите URL вашего портала Bitrix24", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	urlLabel := widget.NewLabelWithStyle("URL вашего портала Bitrix24:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	urlEntry := widget.NewEntry()
 	urlEntry.SetPlaceHolder("например: mycompany.bitrix24.ru или crm.mycompany.com")
+	urlEntry.Resize(fyne.NewSize(380, urlEntry.MinSize().Height))
 
-	buildButton := widget.NewButton("Собрать", func() {
+	buildButton := widget.NewButtonWithIcon("Собрать", theme.ConfirmIcon(), func() {
 		repackExtension(window, urlEntry.Text, tempDir, manifestData)
 	})
+	buildButton.Importance = widget.HighImportance
+
+	backButton := widget.NewButtonWithIcon("Назад", theme.NavigateBackIcon(), func() {
+		os.RemoveAll(tempDir)
+		os.Exit(0)
+	})
+
+	buttons := container.NewHBox(
+		layout.NewSpacer(),
+		backButton,
+		layout.NewSpacer(),
+		buildButton,
+		layout.NewSpacer(),
+	)
 
 	content := container.NewVBox(
-		widget.NewLabel("Введите URL вашего портала Bitrix24"),
+		title,
+		layout.NewSpacer(),
 		urlLabel,
 		urlEntry,
 		layout.NewSpacer(),
-		container.NewHBox(
-			widget.NewButton("Назад", func() {
-				os.RemoveAll(tempDir)
-				// Для простоты перезапускаем приложение
-				os.Exit(0)
-			}),
-			buildButton,
-		),
+		buttons,
 	)
 
-	window.SetContent(content)
+	window.SetContent(container.NewPadded(content))
 }
 
 func repackExtension(window fyne.Window, urlInput string, tempDir string, manifestData Manifest) {
@@ -211,11 +242,9 @@ func repackExtension(window fyne.Window, urlInput string, tempDir string, manife
 
 	httpURL, httpsURL := normalizeURL(urlInput)
 
-	// Обновляем манифест
 	updateManifest(&manifestData, httpURL, httpsURL)
 
-	// Сохраняем обновленный манифест
-	manifestPath := filepath.Join(tempDir, "manifest.json") // ← используем tempDir который теперь указывает на корень расширения
+	manifestPath := filepath.Join(tempDir, "manifest.json")
 	manifestBytes, err := json.MarshalIndent(manifestData, "", "  ")
 	if err != nil {
 		showError(window, "Ошибка сохранения manifest.json: "+err.Error())
@@ -228,8 +257,7 @@ func repackExtension(window fyne.Window, urlInput string, tempDir string, manife
 		return
 	}
 
-	// Сохраняем новый архив (архивируем корневую папку расширения)
-	dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error) {
+	dlg := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error) {
 		if err == nil && writer != nil {
 			defer writer.Close()
 
@@ -248,20 +276,17 @@ func repackExtension(window fyne.Window, urlInput string, tempDir string, manife
 				fmt.Sprintf("Расширение успешно пересобрано!\n\nДобавленные URL:\n%s\n%s\n\nСохранено в: %s",
 					httpURL, httpsURL, outputFile), window)
 
-			// Очищаем временную папку (удаляем всю tempDir, а не только корень расширения)
 			os.RemoveAll(filepath.Dir(tempDir))
 		}
-	}, window).Show()
+	}, window)
+	dlg.Resize(fyne.NewSize(700, 500))
+	dlg.Show()
 }
 
 func normalizeURL(input string) (string, string) {
-	// Убираем протокол если есть
 	re := regexp.MustCompile(`^https?://`)
 	input = re.ReplaceAllString(input, "")
-
-	// Убираем слэши в конце
 	input = strings.TrimRight(input, "/")
-
 	return "http://" + input, "https://" + input
 }
 
@@ -358,22 +383,18 @@ func updateManifest(manifest *Manifest, httpURL, httpsURL string) {
 	httpPattern := httpURL + "/*"
 	httpsPattern := httpsURL + "/*"
 
-	// Обновляем content_scripts
 	for i := range manifest.ContentScripts {
 		manifest.ContentScripts[i].Matches = []string{httpPattern, httpsPattern}
 	}
 
-	// Обновляем web_accessible_resources
 	for i := range manifest.WebAccessibleResources {
 		manifest.WebAccessibleResources[i].Matches = []string{httpPattern, httpsPattern}
 	}
 
-	// Обновляем host_permissions
 	if len(manifest.HostPermissions) > 0 {
 		manifest.HostPermissions = []string{httpPattern, httpsPattern}
 	}
 
-	// Обновляем permissions
 	var newPerms []string
 	for _, perm := range manifest.Permissions {
 		if !strings.Contains(perm, "://") {
