@@ -120,6 +120,7 @@ func showStep1(window fyne.Window, inputFile *string, tempDir *string, manifestD
 		fileLabel,
 		fileRow,
 		layout.NewSpacer(),
+		widget.NewLabel("\n"),
 		container.NewCenter(nextButton),
 	)
 
