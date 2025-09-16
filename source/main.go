@@ -43,7 +43,7 @@ type WebAccessibleResource struct {
 
 func main() {
 	myApp := app.New()
-	myWindow := myApp.NewWindow("Bitrix24 Bad Advice Extension Repackager")
+	myWindow := myApp.NewWindow("B24AD Extension Repackager")
 	myWindow.Resize(fyne.NewSize(650, 520))
 
 	var inputFile string
@@ -65,19 +65,20 @@ func showStep1(window fyne.Window, inputFile *string, tempDir *string, manifestD
 	title := widget.NewLabelWithStyle("Bitrix24 Bad Advice Extension Repackager", fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Monospace: false})
 
 	instructions := widget.NewRichTextFromMarkdown(`
-**Эта программа поможет пересобрать расширение Chrome для B24AD на вашем Bitrix24.**
-
+**С помощью этого приложения вы можете пересобрать расширение B24AD с уточнением уникальных адресов для вашего Bitrix24.**
+`)
+    steps := widget.NewRichTextFromMarkdown(`
 **Шаги:**
 1. _Выберите архив расширения (.zip)_
 2. _Введите URL вашего портала Bitrix24_
-3. _Выберите куда сохранить пересобранное расширение_
-`)
+3. _Выберите куда сохранить_`)
 	instructions.Wrapping = fyne.TextWrapWord
+	steps.Wrapping = fyne.TextWrapWord
 
-	fileLabel := widget.NewLabelWithStyle("Выберите файл расширения:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	fileLabel := widget.NewLabelWithStyle("Выбор архива расширения:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
 	fileEntry := widget.NewEntry()
-	fileEntry.SetPlaceHolder("Выберите ZIP файл расширения...")
+	fileEntry.SetPlaceHolder("ZIP файл...")
 	fileEntry.Resize(fyne.NewSize(380, fileEntry.MinSize().Height))
 
 	fileEntry.OnChanged = func(text string) {
@@ -111,6 +112,8 @@ func showStep1(window fyne.Window, inputFile *string, tempDir *string, manifestD
 		title,
 		layout.NewSpacer(),
 		instructions,
+		layout.NewSpacer(),
+		steps,
 		layout.NewSpacer(),
 		fileLabel,
 		fileRow,
@@ -201,7 +204,7 @@ func findExtensionRoot(dir string) (string, error) {
 }
 
 func showURLInput(window fyne.Window, tempDir string, manifestData Manifest, backToStep1 func()) {
-	title := widget.NewLabelWithStyle("Введите URL вашего портала Bitrix24", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	title := widget.NewLabelWithStyle("Ввод нового URL", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	urlLabel := widget.NewLabelWithStyle("URL вашего портала Bitrix24:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	urlEntry := widget.NewEntry()
 	urlEntry.SetPlaceHolder("например: mycompany.bitrix24.ru или crm.mycompany.com")
