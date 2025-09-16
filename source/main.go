@@ -20,27 +20,6 @@ import (
 	"fyne.io/fyne/v2/storage"
 )
 
-type Manifest struct {
-	Name                   string                   `json:"name"`
-	Version                string                   `json:"version"`
-	ContentScripts         []ContentScript          `json:"content_scripts"`
-	WebAccessibleResources []WebAccessibleResource  `json:"web_accessible_resources"`
-	HostPermissions        []string                 `json:"host_permissions"`
-	Permissions            []string                 `json:"permissions"`
-	ManifestVersion        int                      `json:"manifest_version"`
-}
-
-type ContentScript struct {
-	Matches []string `json:"matches"`
-	JS      []string `json:"js"`
-	CSS     []string `json:"css"`
-}
-
-type WebAccessibleResource struct {
-	Matches   []string `json:"matches"`
-	Resources []string `json:"resources"`
-}
-
 func main() {
 	myApp := app.New()
 	myWindow := myApp.NewWindow("B24AD Extension Repackager")
@@ -48,7 +27,7 @@ func main() {
 
 	var inputFile string
 	var tempDir string
-	var manifestData Manifest
+	var manifestData map[string]interface{}
 
 	// Обёртка для возврата на первый шаг
 	var showStep1Func func()
@@ -61,13 +40,13 @@ func main() {
 }
 
 // Первый шаг: выбор файла
-func showStep1(window fyne.Window, inputFile *string, tempDir *string, manifestData *Manifest, showStep1Func func()) {
+func showStep1(window fyne.Window, inputFile *string, tempDir *string, manifestData *map[string]interface{}, showStep1Func func()) {
 	title := widget.NewLabelWithStyle("Bitrix24 Bad Advice Extension Repackager", fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Monospace: false})
 
 	instructions := widget.NewRichTextFromMarkdown(`
 **С помощью этого приложения вы можете пересобрать расширение B24AD с уточнением уникальных адресов для вашего Bitrix24.**
 `)
-    steps := widget.NewRichTextFromMarkdown(`
+	steps := widget.NewRichTextFromMarkdown(`
 **Шаги:**
 1. _Выберите архив расширения (.zip)_
 2. _Введите URL вашего портала Bitrix24_
@@ -136,7 +115,7 @@ func showStep1(window fyne.Window, inputFile *string, tempDir *string, manifestD
 	window.SetContent(container.NewPadded(padded))
 }
 
-func validateArchive(window fyne.Window, inputFile string, tempDir *string, manifestData *Manifest, backToStep1 func()) {
+func validateArchive(window fyne.Window, inputFile string, tempDir *string, manifestData *map[string]interface{}, backToStep1 func()) {
 	if inputFile == "" {
 		showError(window, "Файл не выбран")
 		return
@@ -165,17 +144,21 @@ func validateArchive(window fyne.Window, inputFile string, tempDir *string, mani
 		return
 	}
 
-	err = json.Unmarshal(manifestBytes, manifestData)
+	var manifest map[string]interface{}
+	err = json.Unmarshal(manifestBytes, &manifest)
 	if err != nil {
 		showError(window, "Ошибка чтения manifest.json: "+err.Error())
 		return
 	}
 
-	if manifestData.Name != "Bitrix24: Bad Advice" {
+	// Проверяем имя расширения
+	name, ok := manifest["name"].(string)
+	if !ok || name != "Bitrix24: Bad Advice" {
 		showError(window, "Это не расширение Bitrix24")
 		return
 	}
 
+	*manifestData = manifest
 	*tempDir = rootDir
 
 	showURLInput(window, *tempDir, *manifestData, backToStep1)
@@ -206,7 +189,7 @@ func findExtensionRoot(dir string) (string, error) {
 	return filepath.Dir(manifestPath), nil
 }
 
-func showURLInput(window fyne.Window, tempDir string, manifestData Manifest, backToStep1 func()) {
+func showURLInput(window fyne.Window, tempDir string, manifestData map[string]interface{}, backToStep1 func()) {
 	title := widget.NewLabelWithStyle("Ввод нового URL", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	urlLabel := widget.NewLabelWithStyle("URL вашего портала Bitrix24:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	urlEntry := widget.NewEntry()
@@ -242,7 +225,7 @@ func showURLInput(window fyne.Window, tempDir string, manifestData Manifest, bac
 	window.SetContent(container.NewPadded(content))
 }
 
-func repackExtension(window fyne.Window, urlInput string, tempDir string, manifestData Manifest) {
+func repackExtension(window fyne.Window, urlInput string, tempDir string, manifestData map[string]interface{}) {
 	urlInput = strings.TrimSpace(urlInput)
 	if urlInput == "" {
 		showError(window, "Введите URL портала")
@@ -251,7 +234,7 @@ func repackExtension(window fyne.Window, urlInput string, tempDir string, manife
 
 	httpURL, httpsURL := normalizeURL(urlInput)
 
-	updateManifest(&manifestData, httpURL, httpsURL)
+	updateManifestMap(manifestData, httpURL, httpsURL)
 
 	manifestPath := filepath.Join(tempDir, "manifest.json")
 	manifestBytes, err := json.MarshalIndent(manifestData, "", "  ")
@@ -397,15 +380,17 @@ func zipDirectory(source, target string) error {
 	})
 }
 
-func updateManifest(manifest *Manifest, httpURL, httpsURL string) {
+// Гибкая модификация manifest.json через map[string]interface{}
+func updateManifestMap(manifest map[string]interface{}, httpURL, httpsURL string) {
 	httpPattern := httpURL + "/*"
 	httpsPattern := httpsURL + "/*"
 
-	// Вспомогательная функция для добавления уникальных значений в слайс строк
-	addUnique := func(slice []string, values ...string) []string {
+	addUnique := func(slice []interface{}, values ...string) []interface{} {
 		exists := make(map[string]struct{}, len(slice))
 		for _, v := range slice {
-			exists[v] = struct{}{}
+			if str, ok := v.(string); ok {
+				exists[str] = struct{}{}
+			}
 		}
 		for _, v := range values {
 			if _, ok := exists[v]; !ok {
@@ -416,19 +401,45 @@ func updateManifest(manifest *Manifest, httpURL, httpsURL string) {
 		return slice
 	}
 
-	// Добавляем новые адреса к matches в content_scripts
-	for i := range manifest.ContentScripts {
-		manifest.ContentScripts[i].Matches = addUnique(manifest.ContentScripts[i].Matches, httpPattern, httpsPattern)
+	// content_scripts
+	if csVal, ok := manifest["content_scripts"].([]interface{}); ok {
+		for i, cs := range csVal {
+			if csMap, ok := cs.(map[string]interface{}); ok {
+				if matches, ok := csMap["matches"].([]interface{}); ok {
+					csMap["matches"] = addUnique(matches, httpPattern, httpsPattern)
+				} else {
+					csMap["matches"] = []interface{}{httpPattern, httpsPattern}
+				}
+				csVal[i] = csMap
+			}
+		}
+		manifest["content_scripts"] = csVal
 	}
 
-	// Добавляем новые адреса к matches в web_accessible_resources
-	for i := range manifest.WebAccessibleResources {
-		manifest.WebAccessibleResources[i].Matches = addUnique(manifest.WebAccessibleResources[i].Matches, httpPattern, httpsPattern)
+	// web_accessible_resources
+	if waVal, ok := manifest["web_accessible_resources"].([]interface{}); ok {
+		for i, wa := range waVal {
+			if waMap, ok := wa.(map[string]interface{}); ok {
+				if matches, ok := waMap["matches"].([]interface{}); ok {
+					waMap["matches"] = addUnique(matches, httpPattern, httpsPattern)
+				} else {
+					waMap["matches"] = []interface{}{httpPattern, httpsPattern}
+				}
+				waVal[i] = waMap
+			}
+		}
+		manifest["web_accessible_resources"] = waVal
 	}
 
-	// Добавляем новые адреса к host_permissions
-	manifest.HostPermissions = addUnique(manifest.HostPermissions, httpPattern, httpsPattern)
+	// host_permissions
+	if hpVal, ok := manifest["host_permissions"].([]interface{}); ok {
+		manifest["host_permissions"] = addUnique(hpVal, httpPattern, httpsPattern)
+	} else {
+		manifest["host_permissions"] = []interface{}{httpPattern, httpsPattern}
+	}
 
-	// Добавляем новые адреса к permissions (только если это url-паттерн)
-// 	manifest.Permissions = addUnique(manifest.Permissions, httpPattern, httpsPattern)
+	// permissions (если нужно)
+	// if pVal, ok := manifest["permissions"].([]interface{}); ok {
+	// 	manifest["permissions"] = addUnique(pVal, httpPattern, httpsPattern)
+	// }
 }
