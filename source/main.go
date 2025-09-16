@@ -111,10 +111,12 @@ func showStep1(window fyne.Window, inputFile *string, tempDir *string, manifestD
 	content := container.NewVBox(
 		title,
 		layout.NewSpacer(),
+		widget.NewLabel("\n"),
 		instructions,
 		layout.NewSpacer(),
 		steps,
 		layout.NewSpacer(),
+		widget.NewLabel("\n"),
 		fileLabel,
 		fileRow,
 		layout.NewSpacer(),
