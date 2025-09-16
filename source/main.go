@@ -424,5 +424,5 @@ func updateManifest(manifest *Manifest, httpURL, httpsURL string) {
 	manifest.HostPermissions = addUnique(manifest.HostPermissions, httpPattern, httpsPattern)
 
 	// Добавляем новые адреса к permissions (только если это url-паттерн)
-	manifest.Permissions = addUnique(manifest.Permissions, httpPattern, httpsPattern)
+// 	manifest.Permissions = addUnique(manifest.Permissions, httpPattern, httpsPattern)
 }
