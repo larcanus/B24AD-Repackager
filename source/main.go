@@ -395,24 +395,34 @@ func updateManifest(manifest *Manifest, httpURL, httpsURL string) {
 	httpPattern := httpURL + "/*"
 	httpsPattern := httpsURL + "/*"
 
-	for i := range manifest.ContentScripts {
-		manifest.ContentScripts[i].Matches = []string{httpPattern, httpsPattern}
-	}
-
-	for i := range manifest.WebAccessibleResources {
-		manifest.WebAccessibleResources[i].Matches = []string{httpPattern, httpsPattern}
-	}
-
-	if len(manifest.HostPermissions) > 0 {
-		manifest.HostPermissions = []string{httpPattern, httpsPattern}
-	}
-
-	var newPerms []string
-	for _, perm := range manifest.Permissions {
-		if !strings.Contains(perm, "://") {
-			newPerms = append(newPerms, perm)
+	// Вспомогательная функция для добавления уникальных значений в слайс строк
+	addUnique := func(slice []string, values ...string) []string {
+		exists := make(map[string]struct{}, len(slice))
+		for _, v := range slice {
+			exists[v] = struct{}{}
 		}
+		for _, v := range values {
+			if _, ok := exists[v]; !ok {
+				slice = append(slice, v)
+				exists[v] = struct{}{}
+			}
+		}
+		return slice
 	}
-	newPerms = append(newPerms, httpPattern, httpsPattern)
-	manifest.Permissions = newPerms
+
+	// Добавляем новые адреса к matches в content_scripts
+	for i := range manifest.ContentScripts {
+		manifest.ContentScripts[i].Matches = addUnique(manifest.ContentScripts[i].Matches, httpPattern, httpsPattern)
+	}
+
+	// Добавляем новые адреса к matches в web_accessible_resources
+	for i := range manifest.WebAccessibleResources {
+		manifest.WebAccessibleResources[i].Matches = addUnique(manifest.WebAccessibleResources[i].Matches, httpPattern, httpsPattern)
+	}
+
+	// Добавляем новые адреса к host_permissions
+	manifest.HostPermissions = addUnique(manifest.HostPermissions, httpPattern, httpsPattern)
+
+	// Добавляем новые адреса к permissions (только если это url-паттерн)
+	manifest.Permissions = addUnique(manifest.Permissions, httpPattern, httpsPattern)
 }
