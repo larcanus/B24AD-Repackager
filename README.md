@@ -35,7 +35,7 @@ cd b24ad-repackager
 
 #### Для вашей ОС:
 
-- **macOS (x86_64):**
+- **macOS x86_64 (Intel):**
   ```bash
   make macos
   ```
@@ -61,7 +61,7 @@ cd b24ad-repackager
 
 ## Сборка дистрибутива
 
-### macOS: DMG-образ
+### macOS (x86_64, Intel): DMG-образ
 
 1. Соберите бинарник:
    ```bash
@@ -71,7 +71,7 @@ cd b24ad-repackager
    ```bash
    ./mac-bulder.sh
    ```
-   > Скрипт создаст `.app` и DMG-образ с иконкой.
+>  Создаёт DMG для macOS на Intel (x86_64). На Apple Silicon (M1/M2) работает через Rosetta 2.
 
 ### Windows: ZIP-архив
 
